@@ -1,79 +1,115 @@
 # Tennis_Simulator
-1. Predict Total Double Faults (DF)
-   Use Poisson Distribution
-   * double faults happen randomly, but at a certain rate
-   * poisson is good for counting rare events (e.g. 5 double faults per match, 2 per set)
 
-Key paramters to include
-* DF%
+A simulation tool designed to predict key statistical outcomes and ultimately a weighted 'score' for players in a tennis match, based on theoretical models and player specific parameters.
+
+## Features
+
+The Tennis Simulator currently focuses on predicting the following aspects of a tennis match:
+
+### 1. Predict Total Double Faults (DF)
+
+This module estimates the total number of double faults a player is likely to hit during a match.
+
+**Methodology:**
+We utilize the Poisson distribution, which is suitable for modeling the number of discrete events occurring within a fixed interval (like a match) when these events happen randomly and at a known average rate. Double faults fit this description well as relatively rare, random occurrences throughout a match.
+
+**Key Parameters Used:**
+* DF% (Double Fault Percentage)
 * First Serve In%
 * Second Serve In%
-* Aerage Points per Game
-* Estimated number of service games: how many games a player is expected to serve (depends on total games)
+* Average Points per Game
+* Estimated number of service games for the player in the match.
 
-Rough Theoretical Process
-a. Estimate total games played (say 24 games in a match).
-b. Estimate service games for player (half the games).
-c. Assume ~4 points per game (industry average ~4.2 points).
-d. So total service points = service games × points per game.
-e. Then, Expected DF = Total Service Points × DF rate
+**Rough Theoretical Process:**
+1.  Estimate the total number of games expected to be played in the match.
+2.  Estimate the number of service games for the specific player (typically assumed to be half the total games).
+3.  Assume an average number of points played per game (industry average is around 4.2 points).
+4.  Calculate the total estimated service points the player will serve: `Total Service Points = Service Games × Points per Game`.
+5.  Calculate the Expected Double Faults: `Expected DF = Total Service Points × DF rate` (where DF rate is derived from DF% and likely applied per service point or second serve point).
 
-2. Predict Break Points Won
-   Theoretical Formula: Expected Break Points Won = Opponent Service Games × Break Point Chances per Game×Break Point Conversion Rate
-   Where:
-   Break Point Chances per Game:
-   Normally estimated from return points won.
-   If a player wins 40% of opponent's service points → will create ~1-2 break points per return game.
-   Break Point Conversion Rate: % of break points actually won (industry average ~40% for ATP).
+### 2. Predict Break Points Won
 
-   Key Parameters to Include:
-    Opponent's First Serve In% and First Serve Win%.
-    Return Points Won % (could use ReturnSecondPercent you just added).
-    Player's Break Point Conversion % (you'll need to add this later).
+This module predicts how many break points a player is expected to convert against their opponent's serve.
 
-    Rough Theoretical Process:
-    Estimate return games played (half total games).
-    Estimate break points created per return game using Return % stats.
-    Multiply by expected conversion rate.
-    Again, you can use Poisson model if you want probability of "winning more than 2.5 break points."
+**Theoretical Formula:**
+$$ \text{Expected Break Points Won} = \text{Opponent Service Games} \times \text{Break Point Chances per Game} \times \text{Break Point Conversion Rate} $$
 
-3. Predict Total Games Played
-   Theoretical Formula:
-   Total games are driven by match competitiveness:
-   * if players hold serve easily -> more games
-   * if there are many breaks -> fewer games
-    you could odel it based on hold percentages: Hold Rate = 1 - (Break Rate)
+* **Break Point Chances per Game:** This is typically estimated based on the player's ability to win points on the opponent's serve (Return Points Won %). For instance, if a player wins 40% of points on the opponent's serve, they are likely to create roughly 1-2 break points per return game.
+* **Break Point Conversion Rate:** This is the percentage of break points faced by the opponent that the player successfully converts into winning the game (industry average is around 40% for ATP players).
 
-  Key Parameters to Include:
-    Player's Service Hold % (can be estimated from Ace%, DF%, First Serve Win%, Second Serve Win%).
-    Opponent’s Return Performance (Return Second Serve %).
-    Surface effect (faster surfaces = higher hold rates).
+**Key Parameters Used (or to be included):**
+* Opponent's First Serve In% and First Serve Win%.
+* Player's Return Points Won % (can potentially use statistics like ReturnSecondPercent).
+* Player's Break Point Conversion % (This parameter may need to be explicitly included or estimated).
 
-  Rough Theoretical Process:
-    Estimate each player’s hold rate.
-    Simulate sets based on serve/hold probabilities.
-    Compute expected games per set.
-    Sum over sets to get total expected games.
+**Rough Theoretical Process:**
+1.  Estimate the number of return games the player will play (typically half the total games).
+2.  Estimate the number of break points the player is likely to create per return game based on their return statistics.
+3.  Multiply the estimated total break points created by the player's expected break point conversion rate.
 
-  For simple estimation:
-  If match is one-sided (e.g., 6-2, 6-3) → ~18 games.
-  If match is close (e.g., 7-6, 6-7) → ~26-28 games.
-  Use your model to predict competitiveness ➔ Total Games.
+*Note: Similar to double faults, a Poisson model could be used here to determine the probability of winning a certain number of break points (e.g., probability of winning more than 2.5 break points).*
 
-  4. Predict Ultimate Score (Custom Weighted Score)
-   +1 point for game win
-   -1 point for game loss
-   +3 points for set win
-   -3 points for set loss
-   +0.5 point per ace
-   -0.5 point per double fault
+### 3. Predict Total Games Played
 
-Theoretical Formula: 
-  Ultimate Score = (G_w - G_l) + 3(S_w - S_i) + 0.5(Aces) - 0.5(Double Faults)
-  
+This module estimates the total number of games that will constitute the match.
 
+**Theoretical Approach:**
+The total number of games in a match is primarily driven by its competitiveness, specifically the interplay between players' ability to hold serve and break serve.
+* Matches where both players hold serve easily tend to have more games (e.g., sets ending 7-5, 7-6).
+* Matches with frequent service breaks tend to have fewer games (e.g., sets ending 6-2, 6-3).
+The core relationship is that a player's Hold Rate is approximately `1 - (Opponent's Break Rate)`.
 
+**Key Parameters Used (or to be included):**
+* Player's Service Hold % (This can be estimated from underlying serve statistics like Ace%, DF%, First Serve Win%, Second Serve Win%).
+* Opponent’s Return Performance (e.g., Return Second Serve %).
+* Surface effect (Faster surfaces generally favor servers, leading to higher hold rates and potentially more games if serves dominate).
 
+**Rough Theoretical Process:**
+1.  Estimate the service hold rate for each player based on their parameters and the opponent's return performance.
+2.  Simulate the match set by set using these estimated serve/hold probabilities.
+3.  Compute the expected number of games per set from the simulation outcomes.
+4.  Sum the expected games over the predicted number of sets to arrive at the total expected games for the match.
 
+*Simple Estimation Guideline:*
+* A predicted one-sided match (e.g., resulting in scores like 6-2, 6-3) might have around 18 games.
+* A predicted close match (e.g., resulting in scores like 7-6, 6-7) might have around 26-28 games.
+The model aims to predict the match competitiveness to inform the total games estimation.
 
+### 4. Predict Ultimate Score (Custom Weighted Score)
 
+This module calculates a custom weighted score for a player based on the aggregated outcomes of the match.
+
+**Scoring System:**
+* +1 point for each game won by the player.
+* -1 point for each game lost by the player.
+* +3 points for each set won by the player.
+* -3 points for each set lost by the player.
+* +0.5 points for each ace hit by the player.
+* -0.5 points for each double fault hit by the player.
+
+**Theoretical Formula:**
+$$ \text{Ultimate Score} = (\text{Games Won} - \text{Games Lost}) + 3 \times (\text{Sets Won} - \text{Sets Lost}) + 0.5 \times (\text{Aces}) - 0.5 \times (\text{Double Faults}) $$
+
+Where:
+* `Games Won`: Total games won by the player throughout the match.
+* `Games Lost`: Total games lost by the player (total games won by the opponent) throughout the match.
+* `Sets Won`: Total sets won by the player.
+* `Sets Lost`: Total sets lost by the player (total sets won by the opponent).
+* `Aces`: Total aces hit by the player in the match.
+* `Double Faults`: Total double faults hit by the player in the match.
+
+## Installation
+
+*(Instructions on how to install the project dependencies and set up the environment would go here.)*
+
+## Usage
+
+*(Instructions on how to run the simulator, input player data, and get predictions would go here. This might involve command-line arguments, input files, or an interactive interface.)*
+
+## Contributing
+
+*(Guidelines for contributing to the project would go here. E.g., reporting issues, suggesting features, submitting pull requests.)*
+
+## License
+
+*(Information about the project's license would go here, e.g., MIT, GPL.)*
