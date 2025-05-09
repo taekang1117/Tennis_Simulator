@@ -1,0 +1,31 @@
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+import pandas as pd
+import time
+
+# Set up Chrome WebDriver (make sure chromedriver is installed and in PATH)
+service = Service('/path/to/chromedriver')
+driver = webdriver.Chrome(service=service)
+
+# Open the page
+url = 'https://www.tennisabstract.com/cgi-bin/player.cgi?p=CorentinMoutet#last52-splits-h'
+driver.get(url)
+time.sleep(5)  # wait for JS to load
+
+# Find the table under the "Last 52 Weeks" section
+table = driver.find_element(By.ID, 'last52')  # id of the target table
+
+# Extract data
+rows = table.find_elements(By.TAG_NAME, 'tr')
+data = []
+for row in rows:
+    cols = row.find_elements(By.TAG_NAME, 'td')
+    if cols:
+        data.append([col.text for col in cols])
+
+# Convert to DataFrame and export
+df = pd.DataFrame(data)
+df.to_csv('corentin_moutet_last52.csv', index=False, header=False)
+
+driver.quit()
