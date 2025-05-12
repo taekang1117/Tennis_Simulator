@@ -3,8 +3,9 @@
 A simulation tool designed to predict key statistical outcomes and ultimately a weighted 'score' for players in a tennis match, based on theoretical models and player specific parameters.
 
 ## Usage
-ls
 g++ -std=c++17 tennis_predictor.cpp -o tennis_predictor
+
+
 ./tennis_predictor
 
 ### 1. Predict Total Double Faults (DF)
