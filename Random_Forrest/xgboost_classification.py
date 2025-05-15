@@ -5,27 +5,28 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, roc_auc_score, classification_report
 import joblib
 
-# ===  SET THRESHOLD HERE ===
-threshold = 23
+# === SET THRESHOLD HERE ===
+threshold = 21.5
 
 # --- Load dataset ---
 df = pd.read_csv("cleaned_output.csv")
 
-# --- Create dynamic Over/Under target ---
+# --- Create Over/Under target ---
 df['Over'] = (df['Total_Games'] > threshold).astype(int)
 
 # --- Define stat columns ---
 percent_cols = ['A%', 'DF%', '1stIn', '1st%', '2nd%',
                 'Ret_TPW', 'Ret_RPW', 'Ret_vA%', 'Ret_v1st%', 'Ret_v2nd%', 'Ret_BPCnv']
 stat_cols = ['DR'] + percent_cols
+extra_numeric = ['Best_of']  
 
 # --- Convert numeric fields ---
-for col in stat_cols + ['Total_Games']:
+for col in stat_cols + ['Total_Games', 'Best_of']:
     df[col] = pd.to_numeric(df[col], errors='coerce')
 
 df.dropna(subset=['Total_Games'], inplace=True)
 
-# --- One-hot encoded surface/round already present ---
+# --- encoded surface/round already present ---
 context_cols = [col for col in df.columns if col.startswith("Surface_") or col.startswith("Rd_")]
 
 # --- Player caches ---
@@ -60,7 +61,7 @@ def extract_features(row, recent_n=5):
     p1_stats.index = [f"{col}_p1" for col in p1_stats.index]
     p2_stats.index = [f"{col}_p2" for col in p2_stats.index]
 
-    context = row[context_cols]
+    context = row[context_cols + extra_numeric]  # includes Best_of now
     return pd.concat([p1_stats, p2_stats, diff, context])
 
 # --- Build dataset ---
@@ -97,7 +98,7 @@ print(classification_report(y_test, y_pred))
 print("Accuracy:", accuracy_score(y_test, y_pred))
 print("AUC:", roc_auc_score(y_test, y_prob))
 
-# --- Save model with dynamic name ---
+# --- Save model ---
 model_filename = f"over_under_{str(threshold).replace('.', '_')}_model.pkl"
 joblib.dump(model, model_filename)
 print(f"\n Model saved as: {model_filename}")
