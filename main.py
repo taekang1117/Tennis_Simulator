@@ -11,6 +11,10 @@ from collections import Counter       # ✅ THIS IS REQUIRED
 import matplotlib.pyplot as plt       # ✅ FOR HISTOGRAM
 # from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
+import matplotlib
+matplotlib.use('Agg')  # Use non-GUI backend (saves plots to file)
+import matplotlib.pyplot as plt
+
 
 
 # Thresholds for over/under analysis
@@ -94,7 +98,11 @@ def simulate_match_scoreline(win_prob):
 
     return set_scores
 
-def monte_carlo_simulation(p1: PlayerStats, p2: PlayerStats, iterations=5000, visualize=True):
+def monte_carlo_simulation(p1: PlayerStats, p2: PlayerStats, iterations=5000, visualize=True, save_plots=False):
+    import matplotlib.pyplot as plt
+    from collections import Counter
+
+    # Change to match web iterations
     scoreline_list = []
     set_counts = []
     total_games_list = []
@@ -116,61 +124,41 @@ def monte_carlo_simulation(p1: PlayerStats, p2: PlayerStats, iterations=5000, vi
 
         a_total = sum([a for a, _ in scoreline])
         b_total = sum([b for _, b in scoreline])
-        margin_list.append(abs(a_total - b_total))  # only once
+        margin_list.append(abs(a_total - b_total))
 
         if simulate_game(win_prob):
             p1_wins += 1
 
-    # --- Confidence Calculations ---
     avg_games = sum(total_games_list) / iterations
     win_pct = p1_wins / iterations * 100
     avg_sets = sum(set_counts) / iterations
     std_dev_games = np.std(total_games_list)
 
-    if std_dev_games < 2.5:
-        confidence = "HIGH"
-    elif std_dev_games < 4.5:
-        confidence = "MEDIUM"
-    else:
-        confidence = "LOW"
+    confidence = "HIGH" if std_dev_games < 2.5 else "MEDIUM" if std_dev_games < 4.5 else "LOW"
 
     avg_margin = sum(margin_list) / iterations
     std_dev_margin = np.std(margin_list)
+    margin_conf = "HIGH (consistent matchups)" if std_dev_margin < 2.0 else "MEDIUM" if std_dev_margin < 4.0 else "LOW (volatile matchups)"
 
-    if std_dev_margin < 2.0:
-        margin_conf = "HIGH (consistent matchups)"
-    elif std_dev_margin < 4.0:
-        margin_conf = "MEDIUM"
-    else:
-        margin_conf = "LOW (volatile matchups)"
-
-    # --- Output ---
     print(f"Avg Total Games (Monte Carlo): {avg_games:.1f}")
     print(f"Std Dev of Total Games: {std_dev_games:.2f}")
     print(f"Confidence Level: {confidence}")
     print(f"Avg Margin of Victory (in games): {avg_margin:.2f}")
     print(f"Std Dev of Margin: {std_dev_margin:.2f}")
     print(f"Margin Confidence: {margin_conf}")
-
-    # --- Over line probabilities ---
-    """
-    for line in [21.5, 22.5, 23.5]:
-        over_pct = sum(g > line for g in total_games_list) / iterations * 100
-        under_pct = 100 - over_pct
-        print(f"Chance of OVER  {line:>4} games: {over_pct:.2f}%")
-        print(f"Chance of UNDER {line:>4} games: {under_pct:.2f}%\n") 
-    """
+    
+    over_under_probs = []
     for line in GAME_THRESHOLDS:
         over_pct = sum(g > line for g in total_games_list) / iterations * 100
         under_pct = 100 - over_pct
         print(f"Chance of OVER  {line:>4} games: {over_pct:.2f}%")
         print(f"Chance of UNDER {line:>4} games: {under_pct:.2f}%\n")
+        over_under_probs.append((line, over_pct, under_pct))
 
 
-
-
-    # --- Distribution Chart ---
-    if visualize:
+    if visualize or save_plots:
+        # --- Plot 1: Total Games Distribution ---
+        plt.figure()
         counter = Counter(total_games_list)
         keys = sorted(counter.keys())
         values = [counter[k] for k in keys]
@@ -179,44 +167,73 @@ def monte_carlo_simulation(p1: PlayerStats, p2: PlayerStats, iterations=5000, vi
         plt.ylabel("Frequency")
         plt.title("Monte Carlo Distribution of Total Games")
         plt.grid(True)
-        plt.show(block=False)
-        plt.pause(0.001)  # Let the GUI catch up
+        if save_plots:
+            plt.savefig("static/plot1.png")
 
-        
-        # --- Scoreline Distribution ---
+
+        # --- Plot 2: Scoreline Distribution ---
+        plt.figure(figsize=(10, 4))
         score_counter = Counter(scoreline_list)
         common_scores = score_counter.most_common(10)
         labels = [x[0] for x in common_scores]
         counts = [x[1] for x in common_scores]
-
-        plt.figure(figsize=(10, 4))
         plt.barh(labels, counts)
         plt.xlabel("Frequency")
         plt.ylabel("Scoreline")
         plt.title("Most Common Scorelines (Monte Carlo)")
         plt.tight_layout()
-        plt.show(block=False)
-        plt.pause(0.001)  # Let the GUI catch up
+        if save_plots:
+            plt.savefig("static/plot2.png")
 
-        
-        # --- Margin of Victory Distribution ---
+        # --- Plot 3: Margin of Victory ---
         plt.figure()
         margin_counter = Counter(margin_list)
         keys = sorted(margin_counter.keys())
         values = [margin_counter[k] for k in keys]
-
         plt.bar(keys, values)
         plt.xlabel("Game Margin")
         plt.ylabel("Frequency")
         plt.title("Distribution of Match Margins (Monte Carlo)")
         plt.grid(True)
         plt.tight_layout()
-        plt.show(block=False)
-        plt.pause(0.001)  # Let the GUI catch up
+        if save_plots:
+            plt.savefig("static/plot3.png")
+
+    if visualize:
         input("Press Enter to close all graphs and continue...")
         plt.close('all')
 
-    return avg_games, win_pct
+    if save_plots:
+        return (
+            avg_games,
+            win_pct,
+            confidence,
+            margin_conf,
+            std_dev_games,
+            avg_margin,
+            std_dev_margin,
+            over_under_probs,
+            "static/plot1.png",
+            "static/plot2.png",
+            "static/plot3.png",
+    )
+
+# even if save_plots is False
+    return (
+        avg_games,
+        win_pct,
+        confidence,
+        margin_conf,
+        std_dev_games,
+        avg_margin,
+        std_dev_margin,
+        over_under_probs,
+        "static/plot1.png",
+        "static/plot2.png",
+        "static/plot3.png",
+)
+
+
 
 
 def simulate_match(win_prob):
@@ -492,13 +509,13 @@ def main():
     parser.add_argument("player1_file")
     parser.add_argument("player2_file")
     parser.add_argument("--avg", action="store_true", help="Use average (mean) instead of median")
-    parser.add_argument("--classic", action="store_true", help="Classic formula only")
-    parser.add_argument("--ml", action="store_true", help="Machine learning only")
-    parser.add_argument("--both", action="store_true", help="Use both methods")
+    # parser.add_argument("--classic", action="store_true", help="Classic formula only")
+    # parser.add_argument("--ml", action="store_true", help="Machine learning only")
+    # parser.add_argument("--both", action="store_true", help="Use both methods")
     args = parser.parse_args()
 
     use_median = not args.avg
-    use_classic = True
+    use_classic = False
     use_ml = True
     if args.classic:
         use_ml = False
@@ -557,7 +574,41 @@ def main():
         print(f"{name1} Win % (Monte Carlo): {win_pct_mc:.2f}%")
         print(f"{name2} Win % (Monte Carlo): {100 - win_pct_mc:.2f}%")
 
-        
+def run_ml_pipeline(p1, p2, name1, name2):
+    print("--- Decision Tree Prediction ---")
+    data = generate_games_training_data(3000)
+    model = DecisionTreeModel(max_depth=5)
+    model.train(data)
+
+    features = generate_features(p1, p2)
+    pred_games = model.predict(features)
+
+    WspA = calculate_Wsp(p1)
+    WspB = calculate_Wsp(p2)
+    CSA = WspA - WspB
+    winA = 1.0 / (1.0 + math.exp(-CSA))
+    winB = 1.0 - winA
+
+    avg_games_mc, win_pct_mc, confidence, margin_conf, std_dev_games, avg_margin, std_dev_margin, over_under_probs, path1, path2, path3 = monte_carlo_simulation(
+        p1, p2, iterations=1000, visualize=False, save_plots=True
+    )
+
+    return {
+        "predicted_games": round(pred_games, 1),
+        "predicted_win_pct": round(winA * 100, 2),
+        "mc_games": round(avg_games_mc, 1),
+        "mc_win_pct": round(win_pct_mc, 2),
+        "confidence_level": confidence,
+        "margin_conf": margin_conf,
+        "std_dev": round(std_dev_games, 2),
+        "avg_margin": round(avg_margin, 2),
+        "std_dev_margin": round(std_dev_margin, 2),
+        "over_under_probs": over_under_probs,
+        "graph1": path1,
+        "graph2": path2,
+        "graph3": path3,
+    }
+  
 
 
 if __name__ == "__main__":
