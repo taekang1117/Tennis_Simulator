@@ -1,5 +1,3 @@
-# predictor.py
-
 import os
 import glob
 from main import (
@@ -50,8 +48,11 @@ def predict_match(player1_name, player2_name, stat_dict):
         confidence,
         margin_conf,
         std_dev_games,
+        variance_games,
         avg_margin,
         std_dev_margin,
+        mode_games,
+        kde_peak,
         over_under_probs,
         path1,
         path2,
@@ -68,6 +69,9 @@ def predict_match(player1_name, player2_name, stat_dict):
         'predicted_games': round(pred_games, 1),
         'predicted_win_pct': round(win_pct, 2),
         'mc_games': round(avg_games, 1),
+        'variance_games': round(variance_games, 2),
+        'expected_mode': int(mode_games),
+        'expected_kde_peak': round(kde_peak, 1),
         'confidence_level': confidence,
         'avg_margin': round(avg_margin, 2),
         'std_dev': round(std_dev_games, 2),
@@ -85,15 +89,18 @@ def run_ml_pipeline(p1, p2, name1, name2):
     features = generate_features(p1, p2)
     pred_games = model.predict(features)
 
-    # Monte Carlo simulation
+    # Monte Carlo simulation (updated unpacking!)
     (
         avg_games,
         win_pct,
         confidence,
         margin_conf,
         std_dev_games,
+        variance_games,
         avg_margin,
         std_dev_margin,
+        mode_games,
+        kde_peak,
         over_under_probs,
         path1,
         path2,
@@ -105,7 +112,10 @@ def run_ml_pipeline(p1, p2, name1, name2):
     # Print terminal output
     print("\n--- Machine Learning Predictions ---")
     print(f"Predicted Total Games (Decision Tree): {pred_games:.1f}")
-    print(f"Average Total Games (Monte Carlo): {avg_games:.1f}")
+    print(f"Expected Games (Mean): {avg_games:.1f}")
+    print(f"Expected Games (Mode): {mode_games}")
+    print(f"Expected Games (KDE Peak): {kde_peak:.1f}")
+    print(f"Variance: {variance_games:.2f}")
     print(f"\nWin Probabilities (Monte Carlo):")
     print(f"{name1}: {win_pct:.2f}%")
     print(f"{name2}: {100 - win_pct:.2f}%")
@@ -118,6 +128,9 @@ def run_ml_pipeline(p1, p2, name1, name2):
         'predicted_games': pred_games,
         'mc_games': avg_games,
         'win_pct': win_pct,
+        'variance_games': variance_games,
+        'expected_mode': mode_games,
+        'expected_kde_peak': kde_peak,
         'std_dev_games': std_dev_games,
         'avg_margin': avg_margin,
         'std_dev_margin': std_dev_margin,
