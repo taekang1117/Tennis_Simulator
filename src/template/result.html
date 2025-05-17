@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <a href="/" class="back-link">← New Prediction</a>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ player1 }} vs {{ player2 }} – ML Prediction</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 15px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+        h2, h3 {
+            color: #34495e;
+            margin: 1.2rem 0 0.8rem;
+        }
+        pre {
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        ul {
+            padding-left: 20px;
+            list-style-type: none;
+        }
+        li {
+            margin: 8px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        strong {
+            color: #2980b9;
+        }
+        .responsive-img {
+            max-width: 100%;
+            height: auto;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .back-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        @media (min-width: 768px) {
+            body {
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 25px;
+            }
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>ML Match Prediction: {{ player1 }} vs {{ player2 }}</h1>
+
+    <h2>📊 Player Statistics Comparison</h2>
+    <pre>
+--- {{ player1 }} Stats ---
+DR: {{ "%.2f"|format(p1_stats.DR) }}
+Aces: {{ "%.2f"|format(p1_stats.A_percent) }}%
+DFs: {{ "%.2f"|format(p1_stats.DF_percent) }}%
+1st In: {{ "%.2f"|format(p1_stats.FirstIn) }}%
+1st Win: {{ "%.2f"|format(p1_stats.FirstPercent) }}%
+2nd Win: {{ "%.2f"|format(p1_stats.SecondPercent) }}%
+
+--- {{ player2 }} Stats ---
+DR: {{ "%.2f"|format(p2_stats.DR) }}
+Aces: {{ "%.2f"|format(p2_stats.A_percent) }}%
+DFs: {{ "%.2f"|format(p2_stats.DF_percent) }}%
+1st In: {{ "%.2f"|format(p2_stats.FirstIn) }}%
+1st Win: {{ "%.2f"|format(p2_stats.FirstPercent) }}%
+2nd Win: {{ "%.2f"|format(p2_stats.SecondPercent) }}%
+    </pre>
+    
+    <h2>🎯 Machine Learning Predictions</h2>
+    <div class="prediction-card">
+        <p><strong>Decision Tree Forecast:</strong></p>
+        <ul>
+            <li>Total Games: <strong>{{ predicted_games }}</strong></li>
+        </ul>
+    </div>
+
+    <div class="prediction-card">
+        <p><strong>Monte Carlo Summary:</strong></p>
+        <ul>
+            <li>Expected Games (Mean): <strong>{{ mc_games }}</strong></li>
+            <li>Expected Games (Mode): <strong>{{ expected_mode }}</strong></li>
+            <li>Expected Games (KDE Peak): <strong>{{ expected_kde_peak }}</strong></li>
+            <li>Variance of Games: <strong>{{ variance_games }}</strong></li>
+            <li>Std Dev: ±{{ std_dev }}</li>
+            <li>Win Probability:
+                <span style="color:#27ae60">{{ player1 }} {{ predicted_win_pct }}%</span> –
+                <span style="color:#c0392b">{{ player2 }} {{ (100 - predicted_win_pct)|round(2) }}%</span>
+            </li>
+            <li>Avg Margin: {{ avg_margin }} games ({{ margin_conf }})</li>
+        </ul>
+    </div>
+
+    <h3>📈 Over/Under Probabilities</h3>
+    <ul>
+    {% for line, over, under in over_under_probs %}
+        <li>
+            <div style="display: flex; justify-content: space-between;">
+                <span>Over {{ line }}:</span>
+                <span style="color: {% if over > 50 %}#27ae60{% else %}#7f8c8d{% endif %}">
+                    {{ "%.1f"|format(over) }}%
+                </span>
+                <span>Under {{ line }}:</span>
+                <span style="color: {% if under > 50 %}#c0392b{% else %}#7f8c8d{% endif %}">
+                    {{ "%.1f"|format(under) }}%
+                </span>
+            </div>
+        </li>
+    {% endfor %}
+    </ul>
+
+    <h2>📉 Simulation Visualizations</h2>
+    <img src="{{ url_for('static', filename='plot1.png') }}" 
+         alt="Total Games Distribution" 
+         class="responsive-img">
+    <img src="{{ url_for('static', filename='plot2.png') }}" 
+         alt="Common Scorelines" 
+         class="responsive-img">
+    <img src="{{ url_for('static', filename='plot3.png') }}" 
+         alt="Victory Margins" 
+         class="responsive-img">
+
+    <a href="/" class="back-link">← New Prediction</a>
+</body>
+</html>
