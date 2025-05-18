@@ -36,7 +36,7 @@ def predict_match(player1_name, player2_name, stat_dict):
 
     # Decision Tree games prediction
     model = DecisionTreeModel(max_depth=5)
-    data = generate_games_training_data(3000)
+    data = generate_games_training_data(10000)
     model.train(data)
     features = generate_features(p1, p2)
     pred_games = model.predict(features)
@@ -58,7 +58,7 @@ def predict_match(player1_name, player2_name, stat_dict):
         path2,
         path3,
     ) = monte_carlo_simulation(
-        p1, p2, iterations=1000, visualize=False, save_plots=True
+        p1, p2, iterations=10000, visualize=False, save_plots=True
     )
 
     return {
@@ -84,7 +84,7 @@ def run_ml_pipeline(p1, p2, name1, name2):
     """ML pipeline for terminal output"""
     # Decision Tree prediction
     model = DecisionTreeModel(max_depth=5)
-    data = generate_games_training_data(3000)
+    data = generate_games_training_data(10000)
     model.train(data)
     features = generate_features(p1, p2)
     pred_games = model.predict(features)
@@ -106,7 +106,7 @@ def run_ml_pipeline(p1, p2, name1, name2):
         path2,
         path3,
     ) = monte_carlo_simulation(
-        p1, p2, iterations=1000, visualize=False, save_plots=True
+        p1, p2, iterations=10000, visualize=False, save_plots=True
     )
 
     # Print terminal output
