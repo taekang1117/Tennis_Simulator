@@ -136,7 +136,7 @@ def monte_carlo_simulation(p1: PlayerStats, p2: PlayerStats, iterations=5000, vi
     mode_games = Counter(total_games_list).most_common(1)[0][0]
     
     from scipy.stats import gaussian_kde
-    x_vals = np.linspace(min(total_games_list), max(total_games_list), 1000)
+    x_vals = np.linspace(min(total_games_list), max(total_games_list), 10000)
     kde = gaussian_kde(total_games_list)
     kde_peak = x_vals[np.argmax(kde(x_vals))]
     
@@ -333,7 +333,7 @@ def get_feature_importance(self):
     return sorted(zip(names, [abs(w) for w in self.weights]), key=lambda x: x[1], reverse=True)
 
 
-def generate_win_training_data(num_samples=5000):
+def generate_win_training_data(num_samples=10000):
     """Generate training data for win probability model"""
     training_data = []
     # Seed for reproducibility can be added if desired
@@ -370,7 +370,7 @@ def generate_win_training_data(num_samples=5000):
     return training_data
 
 
-def generate_games_training_data(num_samples=5000):
+def generate_games_training_data(num_samples=10000):
     """Generate training data for games prediction model"""
     training_data = []
     for _ in range(num_samples):
@@ -460,7 +460,7 @@ def load_player_stats(filename, use_median=True):
 
 
 class LinearModel:
-    def __init__(self, feature_count, lr=0.1, iterations=5000):
+    def __init__(self, feature_count, lr=0.1, iterations=10000):
         self.lr = lr
         self.iterations = iterations
         # Initialize weights and bias
@@ -610,7 +610,7 @@ def main():
             path1,
             path2,
             path3,
-        ) = monte_carlo_simulation(p1, p2, iterations=1000, visualize=True)
+        ) = monte_carlo_simulation(p1, p2, iterations=10000, visualize=True)
         print(f"Avg Total Games (Monte Carlo): {avg_games_mc:.1f}")
         print(f"Expected Games (Mode): {mode_games}")
         print(f"Expected Games (KDE Peak): {kde_peak:.1f}")
@@ -621,8 +621,8 @@ def main():
 
 def run_ml_pipeline(p1, p2, name1, name2):
     print("--- Decision Tree Prediction ---")
-    data = generate_games_training_data(3000)
-    model = DecisionTreeModel(max_depth=5)
+    data = generate_games_training_data(10000)
+    model = DecisionTreeModel(max_depth=1000)
     model.train(data)
 
     features = generate_features(p1, p2)
