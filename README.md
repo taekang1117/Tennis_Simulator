@@ -8,5 +8,5 @@
 # To run c++ via g++
 g++ -std=c++11 main.cpp -o main
 
-
+[Digital Scholarship Project_ (1).pdf](https://github.com/user-attachments/files/20303386/Digital.Scholarship.Project_.1.pdf)
 
