@@ -475,17 +475,24 @@ def load_all_player_stats(filename):
         reader = csv.reader(csvfile)
         next(reader, None)  # skip header
         for row in reader:
-            if len(row) < 6:
+            # if any of the first 6 cells is exactly "-", skip this row entirely
+            if any(cell.strip() == '-' for cell in row[:6]):
                 continue
-            DR = float(row[0])
-            # Remove % symbol before converting to float
-            A_percent = float(row[1].replace('%', ''))
-            DF_percent = float(row[2].replace('%', ''))
-            FirstIn = float(row[3].replace('%', ''))
-            FirstPercent = float(row[4].replace('%', ''))
-            SecondPercent = float(row[5].replace('%', ''))
-            stats.append(PlayerStats(DR, A_percent, DF_percent, FirstIn, FirstPercent, SecondPercent))
+
+            # now it's safe to parse
+            DR           = float(row[0])
+            A_percent    = float(row[1].replace('%',''))
+            DF_percent   = float(row[2].replace('%',''))
+            FirstIn      = float(row[3].replace('%',''))
+            FirstPercent = float(row[4].replace('%',''))
+            SecondPercent= float(row[5].replace('%',''))
+
+            stats.append(PlayerStats(
+                DR, A_percent, DF_percent,
+                FirstIn, FirstPercent, SecondPercent
+            ))
     return stats
+
 
 
 def load_player_stats(filename, use_median=True):
